@@ -1,6 +1,19 @@
 local _, Job = pcall(require,'plenary.job')
 local M = {}
 
+local function get_path_under_cursor()
+  local paths = M.get_paths()
+  local cursor_row = vim.api.nvim_win_get_cursor(0)[1]
+  for path_key, path_node in pairs(paths) do
+    local start_row, start_col, end_row, end_col = path_node:range()
+    -- I think end_row is always just 1 short
+    end_row = end_row + 1
+    if start_row <= cursor_row and end_row >= cursor_row then
+      return path_key, path_node
+    end
+  end
+end
+
 local function get_children_pairs(node, bufnr)
   local block_mapping = node:child(0)
   local key_node
@@ -57,6 +70,22 @@ function M.add_new_path()
   vim.cmd('normal! viw')
 end
 
+function M.add_new_operation()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local name, node = get_path_under_cursor()
+  local end_row, _, _ = node:end_()
+  -- Add a placeholder operation.
+  -- TODO: I should find out what operations are already used and then pick one that isn't
+  -- maybe come up with some arbitrary priority.
+  vim.fn.appendbufline(bufnr, end_row+1, '    placeholder:')
+  -- Move the cursor on top of the 'p' in 'placeholder'.
+  vim.api.nvim_win_set_cursor(0, {end_row+2, 5})
+  -- Visually select 'placeholder' to show what was added.
+  vim.cmd('normal! viw')
+
+
+end
+
 function M.get_paths()
   local bufnr = vim.api.nvim_get_current_buf()
   local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
@@ -85,7 +114,7 @@ function M.get_operations(path)
   -- TODO: probably could support string path as well
   local bufnr = vim.api.nvim_get_current_buf()
   local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
-  local puts_query = [[
+  local operations_query = [[
     (block_mapping_pair key: ((flow_node) @delete (eq? @delete "delete")) value: (block_node) @deletevalue)
     (block_mapping_pair key: ((flow_node) @get (eq? @get "get")) value: (block_node) @getvalue)
     (block_mapping_pair key: ((flow_node) @head (eq? @head "head")) value: (block_node) @headvalue)
@@ -98,7 +127,7 @@ function M.get_operations(path)
   ]]
   local operations = {}
 
-  local query = vim.treesitter.parse_query(ft, puts_query)
+  local query = vim.treesitter.parse_query(ft, operations_query)
   local node_end, _, _ = path:end_()
   for pattern, match, metadata in query:iter_matches(path, bufnr, 0, node_end) do
     -- I know this looks goofy, but since I am putting all the http methods in a
@@ -133,7 +162,8 @@ function M.test()
 
 
   local paths = M.get_paths()
-  print(vim.inspect(M.get_operations(paths['/user/{username}'])))
+  print(get_path_under_cursor())
+  --print(vim.inspect(M.get_operations(paths['/user/{username}'])))
   --local paths = M.get_paths()
   --local last_path
   --local maximum_row = 1
