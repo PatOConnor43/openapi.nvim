@@ -74,12 +74,49 @@ function M.get_paths()
     for id, node in pairs(match) do
       -- skip the flow_node that represents the key.
       if node:type() == 'block_node' then
-        print('111')
         paths = get_children_pairs(node, bufnr)
       end
     end
   end
   return paths
+end
+
+function M.get_operations(path)
+  -- TODO: probably could support string path as well
+  local bufnr = vim.api.nvim_get_current_buf()
+  local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
+  local puts_query = [[
+    (block_mapping_pair key: ((flow_node) @delete (eq? @delete "delete")) value: (block_node) @deletevalue)
+    (block_mapping_pair key: ((flow_node) @get (eq? @get "get")) value: (block_node) @getvalue)
+    (block_mapping_pair key: ((flow_node) @head (eq? @head "head")) value: (block_node) @headvalue)
+    (block_mapping_pair key: ((flow_node) @options (eq? @options "options")) value: (block_node) @optionsvalue)
+    (block_mapping_pair key: ((flow_node) @patch (eq? @patch "patch")) value: (block_node) @patchvalue)
+    (block_mapping_pair key: ((flow_node) @post (eq? @post "post")) value: (block_node) @postvalue)
+    (block_mapping_pair key: ((flow_node) @put (eq? @put "put")) value: (block_node) @putvalue)
+    (block_mapping_pair key: ((flow_node) @connect (eq? @connect "connect")) value: (block_node) @connectvalue)
+    (block_mapping_pair key: ((flow_node) @trace (eq? @trace "trace")) value: (block_node) @tracevalue)
+  ]]
+  local operations = {}
+
+  local query = vim.treesitter.parse_query(ft, puts_query)
+  local node_end, _, _ = path:end_()
+  for pattern, match, metadata in query:iter_matches(path, bufnr, 0, node_end) do
+    -- I know this looks goofy, but since I am putting all the http methods in a
+    -- single query I get partial results when iterating through matches.
+    -- Basically, there will be a match for `get`, a match for `put`, etc.
+    -- The `match` table that they come back in will have batched keys.
+    -- So the match for `put` may have [1, 2], but then `get` will have [3, 4].
+    -- In order to make sure I use the right indexes with each batch, I am making a
+    -- list of the keys and then indexing into those because I can guarantee
+    -- that they will always come back in a batch of 2.
+    local match_keys = vim.tbl_keys(match)
+    if #match_keys == 2 then
+      local key = match[match_keys[1]]
+      local value = match[match_keys[2]]
+      operations[vim.treesitter.get_node_text(key, bufnr)] = value
+    end
+  end
+  return operations
 end
 
 
@@ -95,6 +132,8 @@ function M.test()
   ]]
 
 
+  local paths = M.get_paths()
+  print(vim.inspect(M.get_operations(paths['/user/{username}'])))
   --local paths = M.get_paths()
   --local last_path
   --local maximum_row = 1
