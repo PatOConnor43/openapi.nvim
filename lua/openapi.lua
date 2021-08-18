@@ -110,6 +110,20 @@ function M.get_paths()
   return paths
 end
 
+function M.paths_loclist()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
+  local paths = M.get_paths()
+  local entries = {}
+  for name, node in pairs(paths) do
+    local row, col, _ = node:start()
+    table.insert(entries, {bufnr = bufnr, lnum = row, col = col - 1, text = name})
+  end
+  table.sort(entries, function(a, b) return a.lnum < b.lnum end)
+
+  vim.fn.setloclist(0, entries, 'r')
+end
+
 function M.get_operations(path)
   -- TODO: probably could support string path as well
   local bufnr = vim.api.nvim_get_current_buf()
