@@ -38,6 +38,7 @@ function M.add_new_path()
     return yaml.add_new_path()
   else
     vim.notify(string.format("filetype %s not supported", ft), "error")
+    return
   end
 end
 
@@ -48,6 +49,7 @@ function M.add_new_operation()
     return yaml.add_new_operation()
   else
     vim.notify(string.format("filetype %s not supported", ft), "error")
+    return
   end
 end
 
@@ -58,6 +60,7 @@ function M.get_paths()
     return yaml.get_paths()
   else
     vim.notify(string.format("filetype %s not supported", ft), "error")
+    return
   end
 end
 
@@ -68,6 +71,7 @@ function M.get_operations(path)
     return yaml.get_operations(path)
   else
     vim.notify(string.format("filetype %s not supported", ft), "error")
+    return
   end
 end
 
@@ -135,7 +139,5 @@ function M.test()
   --print(paths)
 
 end
-
-
 
 return M

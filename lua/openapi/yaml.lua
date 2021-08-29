@@ -1,4 +1,3 @@
-local _, Job = pcall(require,'plenary.job')
 local M = {}
 
 local function get_path_under_cursor()
@@ -34,22 +33,6 @@ local function get_children_pairs(node, bufnr)
   return children_pairs
 end
 
-function M.open_preview()
-  local name = vim.call('bufname', vim.api.nvim_get_current_buf())
-  local job = Job:new({
-      enable_recording = false,
-      command = "redoc-cli",
-      args = {"bundle", name},
-  })
-  job:after_success(function()
-    vim.defer_fn(function()
-      vim.fn.system('xdg-open redoc-static.html')
-      end,
-      100)
-    end)
-  job:start()
-end
-
 function M.add_new_path()
   local bufnr = vim.api.nvim_get_current_buf()
   local paths = M.get_paths()
@@ -62,28 +45,47 @@ function M.add_new_path()
       maximum_row = row
     end
   end
-  -- Add a placeholder path.
-  vim.fn.appendbufline(bufnr, maximum_row+1, '  /placeholder:')
-  -- Move the cursor on top of the 'p' in '/placeholder'.
+  -- TODO: Consider encapsulating this in something
+  local textedit = {
+    newText = '  /placeholder:\n    description: description\n',
+    range = {
+      start = {
+        line = maximum_row+1,
+        character = 0
+      },
+      ['end'] = {
+        line = maximum_row+1,
+        character = 0
+      }
+    }
+  }
+  -- apply edits and set cursor on placeholder
+  vim.lsp.util.apply_text_edits({textedit}, bufnr)
   vim.api.nvim_win_set_cursor(0, {maximum_row+2, 3})
-  -- Visually select 'placeholder' to show what was added.
-  vim.cmd('normal! viw')
 end
 
 function M.add_new_operation()
   local bufnr = vim.api.nvim_get_current_buf()
   local name, node = get_path_under_cursor()
   local end_row, _, _ = node:end_()
-  -- Add a placeholder operation.
+  -- TODO: Consider encapsulating this in something
   -- TODO: I should find out what operations are already used and then pick one that isn't
-  -- maybe come up with some arbitrary priority.
-  vim.fn.appendbufline(bufnr, end_row+1, '    placeholder:')
-  -- Move the cursor on top of the 'p' in 'placeholder'.
-  vim.api.nvim_win_set_cursor(0, {end_row+2, 5})
-  -- Visually select 'placeholder' to show what was added.
-  vim.cmd('normal! viw')
-
-
+  local textedit = {
+    newText = '    placeholder:\n      description: description\n',
+    range = {
+      start = {
+        line = end_row+1,
+        character = 0
+      },
+      ['end'] = {
+        line = end_row+1,
+        character = 0
+      }
+    }
+  }
+  -- apply edits and set cursor on placeholder
+  vim.lsp.util.apply_text_edits({textedit}, bufnr)
+  vim.api.nvim_win_set_cursor(0, {end_row+2, 4})
 end
 
 function M.get_paths()
@@ -212,7 +214,5 @@ function M.test()
   --print(paths)
 
 end
-
-
 
 return M
