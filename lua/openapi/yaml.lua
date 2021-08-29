@@ -13,7 +13,6 @@ local function get_path_under_cursor()
   end
 end
 
-
 local function get_children_pairs(node, bufnr)
   local block_mapping = node:child(0)
   local key_node
@@ -23,11 +22,11 @@ local function get_children_pairs(node, bufnr)
   -- Search for releveant children in pair
   for pair in block_mapping:iter_children() do
     for child in pair:iter_children() do
-       if child:type() == 'flow_node' then
-         key_node = child
-       elseif child:type() == 'block_node' then
-         value_node = child
-       end
+      if child:type() == 'flow_node' then
+        key_node = child
+      elseif child:type() == 'block_node' then
+        value_node = child
+      end
     end
     children_pairs[vim.treesitter.get_node_text(key_node, bufnr)] = value_node
   end
@@ -72,18 +71,18 @@ function M.add_new_path()
     newText = '  /placeholder:\n    description: description\n',
     range = {
       start = {
-        line = maximum_row+1,
-        character = 0
+        line = maximum_row + 1,
+        character = 0,
       },
       ['end'] = {
-        line = maximum_row+1,
-        character = 0
-      }
-    }
+        line = maximum_row + 1,
+        character = 0,
+      },
+    },
   }
   -- apply edits and set cursor on placeholder
-  vim.lsp.util.apply_text_edits({textedit}, bufnr)
-  vim.api.nvim_win_set_cursor(0, {maximum_row+2, 3})
+  vim.lsp.util.apply_text_edits({ textedit }, bufnr)
+  vim.api.nvim_win_set_cursor(0, { maximum_row + 2, 3 })
 end
 
 function M.add_new_operation()
@@ -93,33 +92,38 @@ function M.add_new_operation()
   local next_operation = get_next_priority_operation(node, bufnr)
   -- TODO: Consider encapsulating this in something
   local textedit = {
-    newText = string.format([[
+    newText = string.format(
+      [[
     %s:
       description: description
       operationId: %s%s
       responses:
         '200':
           description: success
-]], next_operation, name:gsub('%W+', ""), next_operation),
+]],
+      next_operation,
+      name:gsub('%W+', ''),
+      next_operation
+    ),
     range = {
       start = {
-        line = end_row+1,
-        character = 0
+        line = end_row + 1,
+        character = 0,
       },
       ['end'] = {
-        line = end_row+1,
-        character = 0
-      }
-    }
+        line = end_row + 1,
+        character = 0,
+      },
+    },
   }
   -- apply edits and set cursor on placeholder
-  vim.lsp.util.apply_text_edits({textedit}, bufnr)
-  vim.api.nvim_win_set_cursor(0, {end_row+2, 4})
+  vim.lsp.util.apply_text_edits({ textedit }, bufnr)
+  vim.api.nvim_win_set_cursor(0, { end_row + 2, 4 })
 end
 
 function M.get_paths()
   local bufnr = vim.api.nvim_get_current_buf()
-  local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
+  local ft = vim.api.nvim_buf_get_option(bufnr, 'ft')
   local parser = vim.treesitter.get_parser(bufnr, ft)
   local tstree = parser:parse()[1]
   local root = tstree:root()
@@ -127,7 +131,6 @@ function M.get_paths()
   local paths_query = [[
     (block_mapping_pair key: ((flow_node) @key (eq? @key "paths")) value: (block_node) @value)
   ]]
-
 
   local query = vim.treesitter.parse_query(ft, paths_query)
   for pattern, match, metadata in query:iter_matches(root, bufnr, 0, vim.api.nvim_buf_line_count(bufnr)) do
@@ -144,7 +147,7 @@ end
 function M.get_operations(path)
   -- TODO: probably could support string path as well
   local bufnr = vim.api.nvim_get_current_buf()
-  local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
+  local ft = vim.api.nvim_buf_get_option(bufnr, 'ft')
   local operations_query = [[
     (block_mapping_pair key: ((flow_node) @delete (eq? @delete "delete")) value: (block_node) @deletevalue)
     (block_mapping_pair key: ((flow_node) @get (eq? @get "get")) value: (block_node) @getvalue)
@@ -179,18 +182,15 @@ function M.get_operations(path)
   return operations
 end
 
-
 function M.test()
-
   local bufnr = vim.api.nvim_get_current_buf()
-  local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
+  local ft = vim.api.nvim_buf_get_option(bufnr, 'ft')
   local parser = vim.treesitter.get_parser(bufnr, ft)
   local tstree = parser:parse()[1]
   local root = tstree:root()
   local paths_query = [[
     (block_mapping_pair key: ((flow_node) @key (eq? @key "paths")) value: (block_node) @value)
   ]]
-
 
   local paths = M.get_paths()
   local cursor_path_name, cursor_path_node = get_path_under_cursor()
@@ -242,7 +242,6 @@ function M.test()
   --end
 
   --print(paths)
-
 end
 
 return M

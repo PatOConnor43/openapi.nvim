@@ -1,4 +1,4 @@
-local _, Job = pcall(require,'plenary.job')
+local _, Job = pcall(require, 'plenary.job')
 local yaml = require('openapi.yaml')
 local M = {}
 
@@ -18,75 +18,71 @@ end
 function M.open_preview()
   local name = vim.call('bufname', vim.api.nvim_get_current_buf())
   local job = Job:new({
-      enable_recording = false,
-      command = "redoc-cli",
-      args = {"bundle", name},
+    enable_recording = false,
+    command = 'redoc-cli',
+    args = { 'bundle', name },
   })
   job:after_success(function()
     vim.defer_fn(function()
       vim.fn.system('xdg-open redoc-static.html')
-      end,
-      100)
-    end)
+    end, 100)
+  end)
   job:start()
 end
 
 function M.add_new_path()
   local bufnr = vim.api.nvim_get_current_buf()
-  local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
-  if ft == "yaml" then
+  local ft = vim.api.nvim_buf_get_option(bufnr, 'ft')
+  if ft == 'yaml' then
     return yaml.add_new_path()
   else
-    vim.notify(string.format("filetype %s not supported", ft), "error")
+    vim.notify(string.format('filetype %s not supported', ft), 'error')
     return
   end
 end
 
 function M.add_new_operation()
   local bufnr = vim.api.nvim_get_current_buf()
-  local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
-  if ft == "yaml" then
+  local ft = vim.api.nvim_buf_get_option(bufnr, 'ft')
+  if ft == 'yaml' then
     return yaml.add_new_operation()
   else
-    vim.notify(string.format("filetype %s not supported", ft), "error")
+    vim.notify(string.format('filetype %s not supported', ft), 'error')
     return
   end
 end
 
 function M.get_paths()
   local bufnr = vim.api.nvim_get_current_buf()
-  local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
-  if ft == "yaml" then
+  local ft = vim.api.nvim_buf_get_option(bufnr, 'ft')
+  if ft == 'yaml' then
     return yaml.get_paths()
   else
-    vim.notify(string.format("filetype %s not supported", ft), "error")
+    vim.notify(string.format('filetype %s not supported', ft), 'error')
     return
   end
 end
 
 function M.get_operations(path)
   local bufnr = vim.api.nvim_get_current_buf()
-  local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
-  if ft == "yaml" then
+  local ft = vim.api.nvim_buf_get_option(bufnr, 'ft')
+  if ft == 'yaml' then
     return yaml.get_operations(path)
   else
-    vim.notify(string.format("filetype %s not supported", ft), "error")
+    vim.notify(string.format('filetype %s not supported', ft), 'error')
     return
   end
 end
 
-
 function M.test()
-
   local bufnr = vim.api.nvim_get_current_buf()
-  local ft = vim.api.nvim_buf_get_option(bufnr, "ft")
+  local ft = vim.api.nvim_buf_get_option(bufnr, 'ft')
   local parser = vim.treesitter.get_parser(bufnr, ft)
   local tstree = parser:parse()[1]
   local root = tstree:root()
   local paths_query = [[
     (block_mapping_pair key: ((flow_node) @key (eq? @key "paths")) value: (block_node) @value)
   ]]
-
 
   local paths = M.get_paths()
   print(get_path_under_cursor())
@@ -137,7 +133,6 @@ function M.test()
   --end
 
   --print(paths)
-
 end
 
 return M

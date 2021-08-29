@@ -65,14 +65,14 @@ describe('openapi.yaml', function()
       newText = '  /placeholder:\n    description: description\n',
       range = {
         start = {
-          line = maximum_row+1,
-          character = 0
+          line = maximum_row + 1,
+          character = 0,
         },
         ['end'] = {
-          line = maximum_row+1,
-          character = 0
-        }
-      }
+          line = maximum_row + 1,
+          character = 0,
+        },
+      },
     }
 
     local lsp_util_mock = mock(vim.lsp.util, true)
@@ -80,8 +80,11 @@ describe('openapi.yaml', function()
 
     test_module.add_new_path()
 
-    assert.stub(lsp_util_mock.apply_text_edits).was_called_with({expected_textedit}, 1)
-    assert.stub(vim_api_mock).was_called_with(0, {maximum_row+2, 3})
+    assert.stub(lsp_util_mock.apply_text_edits).was_called_with(
+      { expected_textedit },
+      1
+    )
+    assert.stub(vim_api_mock).was_called_with(0, { maximum_row + 2, 3 })
     mock.revert(lsp_util_mock)
     mock.revert(vim_api_mock)
   end)
@@ -94,15 +97,15 @@ describe('openapi.yaml', function()
         user_username_node = node
       end
     end
-    -- 
+    --
     assert.is_true(user_username_node ~= nil)
     local end_row, _, _ = user_username_node:end_()
     -- move cursor to area covered by user_username path
-    vim.api.nvim_win_set_cursor(0, {end_row - 1, 0})
+    vim.api.nvim_win_set_cursor(0, { end_row - 1, 0 })
 
     -- Indentation is very important here. This can make the test difficult to debug
     -- but the indentation is important to assert for functionality too :shrug:
-    local expected_textedit = { 
+    local expected_textedit = {
       newText = [[
     post:
       description: description
@@ -110,17 +113,17 @@ describe('openapi.yaml', function()
       responses:
         '200':
           description: success
-]], 
+]],
       range = {
         start = {
-          line = end_row+1,
-          character = 0
+          line = end_row + 1,
+          character = 0,
         },
         ['end'] = {
-          line = end_row+1,
-          character = 0
-        }
-      }
+          line = end_row + 1,
+          character = 0,
+        },
+      },
     }
 
     local lsp_util_mock = mock(vim.lsp.util, true)
@@ -128,8 +131,11 @@ describe('openapi.yaml', function()
 
     test_module.add_new_operation()
 
-    assert.stub(lsp_util_mock.apply_text_edits).was_called_with({expected_textedit}, 1)
-    assert.stub(vim_api_mock).was_called_with(0, {end_row+2, 4})
+    assert.stub(lsp_util_mock.apply_text_edits).was_called_with(
+      { expected_textedit },
+      1
+    )
+    assert.stub(vim_api_mock).was_called_with(0, { end_row + 2, 4 })
     mock.revert(lsp_util_mock)
     mock.revert(vim_api_mock)
   end)
