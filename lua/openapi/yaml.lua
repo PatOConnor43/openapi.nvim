@@ -13,6 +13,7 @@ local function get_path_under_cursor()
   end
 end
 
+
 local function get_children_pairs(node, bufnr)
   local block_mapping = node:child(0)
   local key_node
@@ -31,6 +32,27 @@ local function get_children_pairs(node, bufnr)
     children_pairs[vim.treesitter.get_node_text(key_node, bufnr)] = value_node
   end
   return children_pairs
+end
+
+local function get_next_priority_operation(node, bufnr)
+  local children_pairs = get_children_pairs(node, bufnr)
+  -- This is an arbitrary priority of operations
+  local priority = {
+    'get',
+    'post',
+    'put',
+    'delete',
+    'patch',
+    'options',
+    'head',
+    'trace',
+    'connect',
+  }
+  for _, value in pairs(priority) do
+    if children_pairs[value] == nil then
+      return value
+    end
+  end
 end
 
 function M.add_new_path()
@@ -68,10 +90,17 @@ function M.add_new_operation()
   local bufnr = vim.api.nvim_get_current_buf()
   local name, node = get_path_under_cursor()
   local end_row, _, _ = node:end_()
+  local next_operation = get_next_priority_operation(node, bufnr)
   -- TODO: Consider encapsulating this in something
-  -- TODO: I should find out what operations are already used and then pick one that isn't
   local textedit = {
-    newText = '    placeholder:\n      description: description\n',
+    newText = string.format([[
+    %s:
+      description: description
+      operationId: %s%s
+      responses:
+        '200':
+          description: success
+]], next_operation, name:gsub('%W+', ""), next_operation),
     range = {
       start = {
         line = end_row+1,
@@ -164,7 +193,8 @@ function M.test()
 
 
   local paths = M.get_paths()
-  print(get_path_under_cursor())
+  local cursor_path_name, cursor_path_node = get_path_under_cursor()
+  print(vim.inspect(get_next_priority_operation(cursor_path_node, bufnr)))
   --print(vim.inspect(M.get_operations(paths['/user/{username}'])))
   --local paths = M.get_paths()
   --local last_path
