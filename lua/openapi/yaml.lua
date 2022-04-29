@@ -81,7 +81,8 @@ function M.add_new_path()
     },
   }
   -- apply edits and set cursor on placeholder
-  vim.lsp.util.apply_text_edits({ textedit }, bufnr)
+  local client = vim.lsp.buf_get_clients(0)[1]
+  vim.lsp.util.apply_text_edits({ textedit }, bufnr, client.offset_encoding)
   vim.api.nvim_win_set_cursor(0, { maximum_row + 2, 3 })
 end
 
@@ -117,7 +118,8 @@ function M.add_new_operation()
     },
   }
   -- apply edits and set cursor on placeholder
-  vim.lsp.util.apply_text_edits({ textedit }, bufnr)
+  local client = vim.lsp.buf_get_clients(0)[1]
+  vim.lsp.util.apply_text_edits({ textedit }, bufnr, client.offset_encoding)
   vim.api.nvim_win_set_cursor(0, { end_row + 2, 4 })
 end
 
